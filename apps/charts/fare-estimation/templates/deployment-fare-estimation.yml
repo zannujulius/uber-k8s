@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.fareEstimation.releaseName }}-deployment
+  labels:
+    app: {{ .Values.fareEstimation.releaseName }}-app
+spec:
+  replicas: {{ .Values.fareEstimation.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.fareEstimation.releaseName }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.fareEstimation.releaseName }}-app
+    spec:
+      imagePullSecrets: # add secret for private registry access
+        - name: ghcr-secret
+      containers:
+        - name: {{ .Values.fareEstimation.releaseName }}-container
+          image: {{ .Values.fareEstimation.imageRegistry.ghcr }}/{{ .Values.fareEstimation.image.github.owner }}/{{ .Values.fareEstimation.image.repository }}:{{ .Values.fareEstimation.image.tag }}
+          imagePullPolicy: {{ .Values.fareEstimation.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.fareEstimation.image.port }}
+          env:
+            - name: FARE_ESTIMATION_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_ESTIMATION_PORT
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: DB_USER
+                  # referenced from the sealed secret
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: DB_PASSWORD
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_BROKERS
+            - name: KAFKA_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_CLIENT_ID
+            - name: KAFKA_GROUP_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_GROUP_ID
+            - name: KAFKA_ESTIMATE_REQUEST_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_ESTIMATE_REQUEST_TOPIC
+            - name: KAFKA_TRIP_REQUEST_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_TRIP_REQUEST_TOPIC
+            - name: KAFKA_NOTIFICATION_TOPIC
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: KAFKA_NOTIFICATION_TOPIC
+            # this will be reference from the sealed secret
+            - name: GOOGLE_MAPS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: GOOGLE_MAPS_API_KEY
+            - name: FARE_BASE_FARE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_BASE_FARE
+            - name: FARE_TIME_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_TIME_RATE
+            - name: FARE_DISTANCE_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_DISTANCE_RATE
+            - name: FARE_SURGE_MULTIPLIER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_SURGE_MULTIPLIER
+            - name: FARE_CURRENCY
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_CURRENCY
+            - name: FARE_FALLBACK_AVERAGE_SPEED_KPH
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.fareEstimation.releaseName }}-config
+                  key: FARE_FALLBACK_AVERAGE_SPEED_KPH

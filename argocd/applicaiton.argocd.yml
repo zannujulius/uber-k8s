@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-crd
+  namespace: argocd
+spec:
+  project: default # name of the Argo CD project to which the application belongs
+  source:
+    repoURL: https://github.com/zannujulius/uber-clone.git
+    targetRevision: HEAD # branch, tag, or commit to deploy
+    path: k8s/apps # path to the directory containing the Kubernetes manifests for the application
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: uber-ns-app # namespace where the application will be deployed
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

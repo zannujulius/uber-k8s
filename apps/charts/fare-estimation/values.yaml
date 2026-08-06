@@ -1,0 +1,35 @@
+fareEstimation:
+  releaseName: fare-estimation
+  imageRegistry:
+    ghcr: "ghcr.io"
+  replicaCount: 1
+  image:
+    repository: fare-estimation
+    github:
+      owner: zannujulius
+    tag: v1
+    pullPolicy: IfNotPresent
+    port: 3012
+    env:
+      NODE_ENV: production
+  service:
+    port: 3012
+    targetPort: 3012
+  fare:
+    BASE_FARE: "500"
+    TIME_RATE: "50"
+    DISTANCE_RATE: "300"
+    SURGE_MULTIPLIER: "1"
+    CURRENCY: "RWF"
+    FALLBACK_AVERAGE_SPEED_KPH: "28"
+
+kafka:
+  BROKERS: kafka-statefulset-0.kafka-service.uber-ns-app.svc.cluster.local:9092
+  CLIENT_ID: fare-estimation
+  GROUP_ID: fare-estimation-group
+  ESTIMATE_REQUEST_TOPIC: rider.trip.estimate.requested
+  TRIP_REQUEST_TOPIC: rider.trip.requested
+  NOTIFICATION_TOPIC: rider.notifications
+
+google_api:
+  GOOGLE_MAPS_API_KEY: "-wQb5DUnr"

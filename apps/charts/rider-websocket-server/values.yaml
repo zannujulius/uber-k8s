@@ -1,0 +1,31 @@
+riderWebsocketServer:
+  releaseName: rider-websocket-server
+  imageRegistry:
+    ghcr: "ghcr.io"
+  replicaCount: 1
+  image:
+    repository: rider-websocket-server
+    github:
+      owner: zannujulius
+    tag: v1
+    pullPolicy: IfNotPresent
+    port: 3010
+    env:
+      NODE_ENV: production
+  service:
+    port: 3010
+    targetPort: 3010
+
+  kafka:
+    BROKERS: kafka-statefulset-0.kafka-service.uber-ns-app.svc.cluster.local:9092
+    CLIENT_ID: rider-websocket-server
+    GROUP_ID: rider-ws-group
+    KAFKAJS_NO_PARTITIONER_WARNING: 1
+
+# google_api:
+#   GOOGLE_MAPS_API_KEY: ""
+
+# KAFKA_BROKERS=localhost:9092
+# KAFKA_CLIENT_ID=rider-websocket-server
+# KAFKA_GROUP_ID=rider-ws-group
+

@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.riderWebsocketServer.releaseName }}-deployment
+  labels:
+    app: {{ .Values.riderWebsocketServer.releaseName }}-app
+spec:
+  replicas: {{ .Values.riderWebsocketServer.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.riderWebsocketServer.releaseName }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.riderWebsocketServer.releaseName }}-app
+    spec:
+      imagePullSecrets: # add secret for private registry access
+        - name: ghcr-secret
+      containers:
+        - name: {{ .Values.riderWebsocketServer.releaseName }}-container
+          image: {{ .Values.riderWebsocketServer.imageRegistry.ghcr }}/{{ .Values.riderWebsocketServer.image.github.owner }}/{{ .Values.riderWebsocketServer.image.repository }}:{{ .Values.riderWebsocketServer.image.tag }}
+          imagePullPolicy: {{ .Values.riderWebsocketServer.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.riderWebsocketServer.image.port }}
+          env:
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.riderWebsocketServer.releaseName }}-config
+                  key: KAFKA_BROKERS
+            - name: KAFKA_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.riderWebsocketServer.releaseName }}-config
+                  key: KAFKA_CLIENT_ID
+            - name: KAFKA_GROUP_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.riderWebsocketServer.releaseName }}-config
+                  key: KAFKA_GROUP_ID
+                  # to be gotten from the
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: JWT_SECRET
+            - name: KAFKAJS_NO_PARTITIONER_WARNING
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.riderWebsocketServer.releaseName }}-config
+                  key: KAFKAJS_NO_PARTITIONER_WARNING 

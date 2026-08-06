@@ -1,0 +1,13 @@
+global:
+  application:
+    name: uber
+  database:
+    postgres:
+      DB_HOST: uber-db-postgresql.uber-ns-app.svc.cluster.local
+      DB_PORT: 5432
+      DB_NAME: ride_hailing_db
+      DB_USER: zannujulius
+    namespace:
+      name: uber-ns-app
+  github:
+    GIT_USERNAME: zannujulius

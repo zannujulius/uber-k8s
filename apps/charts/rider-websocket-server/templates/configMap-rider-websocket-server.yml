@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{.Values.riderWebsocketServer.releaseName}}-config
+data:
+  KAFKA_BROKERS: {{.Values.riderWebsocketServer.kafka.BROKERS | quote }}
+  KAFKA_CLIENT_ID: {{.Values.riderWebsocketServer.kafka.CLIENT_ID | quote }}
+  KAFKA_GROUP_ID: {{.Values.riderWebsocketServer.kafka.GROUP_ID | quote }}
+  KAFKAJS_NO_PARTITIONER_WARNING: {{.Values.riderWebsocketServer.kafka.KAFKAJS_NO_PARTITIONER_WARNING | quote }}

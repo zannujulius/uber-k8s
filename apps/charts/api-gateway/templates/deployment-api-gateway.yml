@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.apiGateway.releaseName }}-deployment
+  labels:
+    app: {{ .Values.apiGateway.releaseName }}-app
+spec:
+  replicas: {{ .Values.apiGateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.apiGateway.releaseName }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.apiGateway.releaseName }}-app
+    spec:
+      imagePullSecrets: # add secret for private registry access
+        - name: ghcr-secret
+      containers:
+        - name: {{ .Values.apiGateway.releaseName }}-container
+          image: {{ .Values.apiGateway.imageRegistry.ghcr }}/{{ .Values.apiGateway.image.github.owner }}/{{ .Values.apiGateway.image.repository }}:{{ .Values.apiGateway.image.tag }}
+          imagePullPolicy: {{ .Values.apiGateway.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.apiGateway.image.port }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.apiGateway.image.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.apiGateway.image.port }}
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 3
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: PORT
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: NODE_ENV
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DB_USER
+            # secret key ref
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: DB_PASSWORD
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: JWT_SECRET
+
+            - name: JWT_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: JWT_EXPIRES_IN
+
+            - name: JWT_REFRESH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.application.name }}-secret
+                  key: JWT_REFRESH_SECRET
+
+            - name: JWT_REFRESH_EXPIRES_IN
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: JWT_REFRESH_EXPIRES_IN
+            - name: RATE_LIMIT_WINDOW_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: RATE_LIMIT_WINDOW_MS
+            - name: RATE_LIMIT_MAX
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: RATE_LIMIT_MAX
+            - name: CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: CORS_ORIGINS
+            - name: RIDER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: RIDER_SERVICE_URL
+            - name: DRIVER_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DRIVER_SERVICE_URL
+            - name: LOCATION_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: LOCATION_SERVICE_URL
+            - name: DRIVER_ASSIGNMENT_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DRIVER_ASSIGNMENT_SERVICE_URL
+            - name: RIDER_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: RIDER_WS_URL
+            - name: DRIVER_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Values.apiGateway.releaseName }}-config
+                  key: DRIVER_WS_URL

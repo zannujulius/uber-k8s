@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.apiGateway.releaseName }}-config
+data:
+  PORT: {{ .Values.apiGateway.image.port | quote }}
+  NODE_ENV: {{ .Values.apiGateway.image.env.NODE_ENV | quote }}
+
+  DB_HOST: {{ .Values.global.database.postgres.DB_HOST | quote }}
+  DB_PORT: {{ .Values.global.database.postgres.DB_PORT | quote }}
+  DB_NAME: {{ .Values.global.database.postgres.DB_NAME | quote }}
+  DB_USER: {{ .Values.global.database.postgres.DB_USER | quote }}
+
+  JWT_EXPIRES_IN: {{ .Values.apiGateway.jwt.JWT_EXPIRES_IN | quote }}
+  JWT_REFRESH_EXPIRES_IN: {{ .Values.apiGateway.jwt.JWT_REFRESH_EXPIRES_IN | quote }}
+
+  RATE_LIMIT_WINDOW_MS: {{ .Values.apiGateway.rate_limit.RATE_LIMIT_WINDOW_MS | quote }}
+  RATE_LIMIT_MAX: {{ .Values.apiGateway.rate_limit.RATE_LIMIT_MAX | quote }}
+
+  CORS_ORIGINS: {{ .Values.apiGateway.cors.CORS_ORIGINS | quote }}
+
+  RIDER_SERVICE_URL: {{ .Values.apiGateway.services.RIDER_SERVICE_URL | quote }}
+  DRIVER_SERVICE_URL: {{ .Values.apiGateway.services.DRIVER_SERVICE_URL | quote }}
+  LOCATION_SERVICE_URL: {{ .Values.apiGateway.services.LOCATION_SERVICE_URL | quote }}
+  DRIVER_ASSIGNMENT_SERVICE_URL: {{ .Values.apiGateway.services.DRIVER_ASSIGNMENT_SERVICE_URL | quote }}
+  RIDER_WS_URL: {{ .Values.apiGateway.services.RIDER_WS_URL | quote }}
+  DRIVER_WS_URL: {{ .Values.apiGateway.services.DRIVER_WS_URL | quote }}

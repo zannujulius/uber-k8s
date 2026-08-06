@@ -1,0 +1,6 @@
+# Secrets
+sealed-secrets-cert.pem
+secrets.yml
+secret.yml
+
+*.pem

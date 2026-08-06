@@ -1,0 +1,24 @@
+cluster:
+  name: uber-cluster
+  namespace: uber-ns-app
+
+kafka:
+  releaseName: kafka
+  replicaCount: 1
+  image:
+    name: confluentinc/cp-kafka
+    tag: 7.6.0
+    pullPolicy: IfNotPresent
+  service:
+    port: 9092
+    targetPort: 9092
+    controllerPort: 9093
+    controllerTargetPort: 9093
+  clusterName: kafka
+  configuration:
+    KAFKA_PROCESS_ROLES: "broker,controller"
+    KAFKA_CONTROLLER_QUORUM_VOTERS: "0@kafka-statefulset-0.kafka-service.uber-ns-app.svc.cluster.local:9093"
+    KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
+    LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+    CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+    KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
