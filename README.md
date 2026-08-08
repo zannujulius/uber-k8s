@@ -110,16 +110,6 @@ docker logs <CONTAINER_NAME>
 <!--
 great now that the values.yml is shared across the all deployment can i just run helm install in the k8s so it will dek -->
 
-nginx controller
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-
-helm install ingress-nginx ingress-nginx/ingress-nginx \
- --namespace ingress-nginx \
- --create-namespace
-Then watch until it gets an external IP:
-
-kubectl get svc ingress-nginx-controller -n ingress-nginx --watch
 
 ---
 
@@ -376,6 +366,103 @@ kubectl create secret docker-registry ghcr-secret \
 | kubeseal --format yaml --cert sealed-secrets-cert.pem \
   > k8s/sealed-ghcr-secret.yml
 ```
+
+---
+
+## Argo CD (GitOps)
+
+Argo CD runs **inside** the cluster and continuously pulls this repo, applying whatever is under `apps/` so the cluster state always matches git (`main` → `HEAD`). Deploys are **pull-based**: you never run `helm install` or `kubectl apply` for the app — you commit to this repo and Argo CD syncs it.
+
+```
+git push (uber-k8s)  -->  Argo CD detects new commit  -->  renders apps/  -->  applies to uber-ns-app
+```
+
+> **Prerequisites:** the Sealed Secrets controller and the `ghcr-secret` pull secret (both above) must exist *before* the first sync, or the pods stay in `CreateContainerConfigError` / `ImagePullBackOff`.
+
+### 1. Install Argo CD
+
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# wait for the control plane to come up
+kubectl wait --for=condition=available --timeout=300s deploy --all -n argocd
+```
+
+### 2. Get the initial admin password
+
+There is **no** default password — Argo CD generates a random one into a secret (username is `admin`):
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+### 3. Access the UI
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+# open https://localhost:8080  (accept the self-signed cert; user: admin)
+```
+
+### 4. (Optional) Install the CLI
+
+```bash
+brew install argocd
+argocd login localhost:8080 --username admin --password <password from step 2> --insecure
+```
+
+### 5. Register credentials for this repo (private repos only)
+
+If `uber-k8s` is private, give Argo CD read access or the sync fails with an auth / `repository not found` error:
+
+```bash
+kubectl apply -n argocd -f - <<'EOF'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-uber-k8s
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  url: https://github.com/zannujulius/uber-k8s.git
+  username: zannujulius
+  password: <fine-grained PAT with repo read>
+EOF
+```
+
+### 6. Bootstrap the Application
+
+The [`argocd/applicaiton.argocd.yml`](argocd/applicaiton.argocd.yml) manifest points Argo CD at this repo (`path: apps`, `targetRevision: HEAD`) with automated sync (`prune` + `selfHeal`) into `uber-ns-app`. Apply it once to register the app:
+
+```bash
+kubectl apply -f argocd/applicaiton.argocd.yml
+```
+
+From here on, Argo CD deploys automatically on every commit to `main` — no further `kubectl apply` needed.
+
+### 7. Verify sync and health
+
+```bash
+kubectl -n argocd get applications
+kubectl -n argocd get app argocd-crd \
+  -o jsonpath='{.status.sync.status} / {.status.health.status}{"\n"}'
+```
+
+Expect `Synced / Healthy`. `Synced` means git matches the cluster; `Degraded` means a workload isn't becoming Ready (check the pods/logs in `uber-ns-app`).
+
+### Troubleshooting
+
+**`Failed to checkout revision … not our ref`** — Argo CD's repo-server cached a stale view (e.g. it read the repo a moment before your push propagated). The commit is fine on the remote; force Argo CD to re-fetch:
+
+```bash
+kubectl -n argocd annotate app argocd-crd argocd.argoproj.io/refresh=hard --overwrite
+# if still stale, clear the repo-server cache:
+kubectl -n argocd rollout restart deploy argocd-repo-server
+```
+
+**`Synced` but never `Healthy`** — the manifests applied but pods aren't Ready. Usually a missing prerequisite: the Sealed Secrets controller isn't installed / `uber-secret` wasn't generated, or `ghcr-secret` is missing. Check `kubectl -n uber-ns-app get pods` and the pod events.
 
 ---
 
