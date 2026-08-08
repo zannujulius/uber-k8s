@@ -7,7 +7,7 @@ riderWebsocketServer:
     repository: rider-websocket-server
     github:
       owner: zannujulius
-    tag: v1
+    tag: dcdcb505131225c8e6a4c8f2159d25df07f5830f
     pullPolicy: IfNotPresent
     port: 3010
     env:
