@@ -8,7 +8,7 @@ apiGateway:
     repository: api-gateway
     github:
       owner: zannujulius
-    tag: 074ffed2d90f9702baf73bd8fe20dbd52777372e
+    tag: 92ff8054724909c7699131240db979314bb1a927
     pullPolicy: IfNotPresent
     port: 3000
     env:
